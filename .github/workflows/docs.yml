@@ -40,10 +40,6 @@ jobs:
           mv _build_doxygen/html deploy/doxygen
           mv _build_sphinx/html/* deploy
 
-      - name: Setup pages
-        if: github.event_name != 'pull_request' && matrix.doxygen-version == '1.14.0'
-        uses: actions/configure-pages@v4
-
       - name: Upload pages artifact
         if: github.event_name != 'pull_request' && matrix.doxygen-version == '1.14.0'
         uses: actions/upload-pages-artifact@v3

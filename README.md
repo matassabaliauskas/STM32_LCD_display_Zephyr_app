@@ -1,52 +1,7 @@
 # Zephyr Example Application
+# STM32_LCD_display_Zephyr_app
+ESP32 ZephyrOS App: 3.2 inch TFT LCD display
 
-<a href="https://github.com/zephyrproject-rtos/example-application/actions/workflows/build.yml?query=branch%3Amain">
-  <img src="https://github.com/zephyrproject-rtos/example-application/actions/workflows/build.yml/badge.svg?event=push">
-</a>
-<a href="https://github.com/zephyrproject-rtos/example-application/actions/workflows/docs.yml?query=branch%3Amain">
-  <img src="https://github.com/zephyrproject-rtos/example-application/actions/workflows/docs.yml/badge.svg?event=push">
-</a>
-<a href="https://zephyrproject-rtos.github.io/example-application">
-  <img alt="Documentation" src="https://img.shields.io/badge/documentation-3D578C?logo=sphinx&logoColor=white">
-</a>
-<a href="https://zephyrproject-rtos.github.io/example-application/doxygen">
-  <img alt="API Documentation" src="https://img.shields.io/badge/API-documentation-3D578C?logo=c&logoColor=white">
-</a>
-
-This repository contains a Zephyr example application. The main purpose of this
-repository is to serve as a reference on how to structure Zephyr-based
-applications. Some of the features demonstrated in this example are:
-
-- Basic [Zephyr application][app_dev] skeleton
-- [Zephyr workspace applications][workspace_app]
-- [Zephyr modules][modules]
-- [West T2 topology][west_t2]
-- [Custom boards][board_porting]
-- Custom [devicetree bindings][bindings]
-- Out-of-tree [drivers][drivers]
-- Out-of-tree libraries
-- Example CI configuration (using GitHub Actions)
-- Custom [west extension][west_ext]
-- Custom [Zephyr runner][runner_ext]
-- Doxygen and Sphinx documentation boilerplate
-
-This repository is versioned together with the [Zephyr main tree][zephyr]. This
-means that every time that Zephyr is tagged, this repository is tagged as well
-with the same version number, and the [manifest](west.yml) entry for `zephyr`
-will point to the corresponding Zephyr tag. For example, the `example-application`
-v2.6.0 will point to Zephyr v2.6.0. Note that the `main` branch always
-points to the development branch of Zephyr, also `main`.
-
-[app_dev]: https://docs.zephyrproject.org/latest/develop/application/index.html
-[workspace_app]: https://docs.zephyrproject.org/latest/develop/application/index.html#zephyr-workspace-app
-[modules]: https://docs.zephyrproject.org/latest/develop/modules.html
-[west_t2]: https://docs.zephyrproject.org/latest/develop/west/workspaces.html#west-t2
-[board_porting]: https://docs.zephyrproject.org/latest/guides/porting/board_porting.html
-[bindings]: https://docs.zephyrproject.org/latest/guides/dts/bindings.html
-[drivers]: https://docs.zephyrproject.org/latest/reference/drivers/index.html
-[zephyr]: https://github.com/zephyrproject-rtos/zephyr
-[west_ext]: https://docs.zephyrproject.org/latest/develop/west/extensions.html
-[runner_ext]: https://docs.zephyrproject.org/latest/develop/modules.html#external-runners
 
 ## Getting Started
 
@@ -54,41 +9,100 @@ Before getting started, make sure you have a proper Zephyr development
 environment. Follow the official
 [Zephyr Getting Started Guide](https://docs.zephyrproject.org/latest/getting_started/index.html).
 
-### Initialization
+### Setup Zephyr Template/Example app
 
-The first step is to initialize the workspace folder (``my-workspace``) where
+The first step is to initialize the workspace folder (``zephyr_workspace``) where
 the ``example-application`` and all Zephyr modules will be cloned. Run the following
 command:
 
 ```shell
-# initialize my-workspace for the example-application (main branch)
-west init -m https://github.com/zephyrproject-rtos/example-application --mr main my-workspace
-# update Zephyr modules
-cd my-workspace
+# initialize `zephyr_workspace` workspace (not repo) for the example-application (main branch)
+cd ~/MatasPC/coding/
+mkdir zephyr_workspace
+cd zephyr_workspace
+# initialize `stm32_lcd_repo` git repo within the workspace, which contains the example-application
+git clone https://github.com/zephyrproject-rtos/example-application stm32_lcd_repo
+west init -l stm32_lcd_repo
 west update
 ```
 
-### Building and running
+### Environment Setup
+
+The first step is to create a Python virtual environment (venv). 
+Run the following command:
+
+```shell
+# Create venv
+python3 -m venv ~/MatasPC/coding/zephyr_workspace/.venv
+source ~/MatasPC/coding/zephyr_workspace/.venv/bin/activate
+deactivate
+```
+
+Verify:
+```shell
+matas@matas-lenovo-15ACH6:~/MatasPC/coding/zephyr_workspace$ which python
+/home/matas/MatasPC/coding/zephyr_workspace/.venv/bin/python
+```
+
+Setup direnv to automate this:
+```shell
+nano .envrc
+```
+
+Contents of .envrc:
+```shell
+# ~/MatasPC/coding/zephyr_workspace
+source ~/MatasPC/coding/zephyrproject/.venv/bin/activate
+source ~/MatasPC/coding/zephyrproject/zephyr/zephyr-env.sh
+```
+and then:
+```shell
+direnv allow
+```
+
+### STM32 Development Board: STM32F407VE
+
+https://docs.zephyrproject.org/latest/boards/others/black_f407ve/doc/index.html
+
+Zephyr board name: black_f407ve
+
+### Build Zephyr App for STM32 F407VE (black_f407ve)
 
 To build the application, run the following command:
 
 ```shell
-cd example-application
-west build -b $BOARD app
+cd stm32_lcd_repo/
+west build -p always -b black_f407ve app
 ```
 
+
+[west build -b $BOARD app]
 where `$BOARD` is the target board.
 
 You can use the `custom_plank` board found in this
 repository. Note that Zephyr sample boards may be used if an
 appropriate overlay is provided (see `app/boards`).
 
-A sample debug configuration is also provided. To apply it, run the following
-command:
 
+Optional step if facing an issue with west:
 ```shell
-west build -b $BOARD app -- -DEXTRA_CONF_FILE=debug.conf
+# Reinitialize Zephyr:
+matas@matas-lenovo-15ACH6:~/MatasPC/coding/zephyr_workspace$ west init -l stm32_lcd_repo
+matas@matas-lenovo-15ACH6:~/MatasPC/coding/zephyr_workspace$ unset ZEPHYR_BASE
+matas@matas-lenovo-15ACH6:~/MatasPC/coding/zephyr_workspace$ unset WEST_WORKSPACE
+matas@matas-lenovo-15ACH6:~/MatasPC/coding/zephyr_workspace$ rm -rf /home/matas/MatasPC/coding/zephyr_workspace/.west/
+# Redo init:
+matas@matas-lenovo-15ACH6:~/MatasPC/coding/zephyr_workspace$ west init -l stm32_lcd_repo
+matas@matas-lenovo-15ACH6:~/MatasPC/coding/zephyr_workspace$ west update
 ```
+
+Optional step if facing an issue with west:
+```shell
+# ...
+pip install -r zephyr/scripts/requirements.txt
+```
+
+### Flash Zephyr App to STM32
 
 Once you have built the application, run the following command to flash it:
 
@@ -96,6 +110,8 @@ Once you have built the application, run the following command to flash it:
 west flash
 ```
 
+### TO BE WRITTEN
+### =============
 ### Testing
 
 To execute Twister integration tests, run the following command:
