@@ -7,6 +7,9 @@
 #include <zephyr/drivers/sensor.h>
 #include <zephyr/logging/log.h>
 
+#include <display.h>
+// #include <zephyr/device.h>
+// #include <zephyr/drivers/display.h>
 #include <app/drivers/blink.h>
 
 #include <app_version.h>
@@ -24,6 +27,10 @@ int main(void)
 	struct sensor_value last_val = { 0 }, val;
 
 	printk("Zephyr Example Application %s\n", APP_VERSION_STRING);
+
+	printk("STM32 TFT SPI Display Demo \n");
+	int display_status = sample_display_draw();
+	printk("sample_display_draw status = %d \n", display_status);
 
 	sensor = DEVICE_DT_GET(DT_NODELABEL(example_sensor));
 	if (!device_is_ready(sensor)) {
