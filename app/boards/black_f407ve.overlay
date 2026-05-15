@@ -4,16 +4,27 @@
  */
 
 /* This devicetree overlay file will be automatically picked by the Zephyr
- * build system when building the sample for the nucleo_f302r8 board. It shows
+ * build system when building the sample for the black_f407ve board. It shows
  * how the example-application can be built on sample boards already provided
  * by Zephyr.
  */
 
 #include <zephyr/dt-bindings/display/panel.h>
 
+/**
+ * TFT LCD Display SPI pins: SPI2
+ * 
+ * SDI: (Data In)		PB15/MOSI = U2.54 = SPI2_MOSI/TIM1_CH3N/PB15 
+ * SCL: (Clock) 		PB13/SCK = U2.52 = SPI2_SCK/I2S2_CK/TIM1_CH1N/USART3_CTS/PB13
+ * CS: 	(Chip Select)	PB12/CS = U2.51 = SPI2_NSS/I2S2_WS/I2S2_SMBA1/TIM1_BKIN/USART3_CK/PB12 (CS0)
+ * SDO: (Data Out)		PB14/MISO = U2.53 = SPI2_MISO/TIM1_CH2N/USART3_RTS/PB14
+ * RS: 	(RS/DC/A0)		PC5/RS = U2.34 = PC5/ADC12_IN15
+ * BLK: (Backlight)		PB1/BLK = U2.36 = (TIM1_CH3N)/TIM8_CH3/TIM3_CH4/ADC12_IN9/PB1
+ */
+
 / {
 	chosen {
-		zephyr,display = &display;
+		zephyr,display = &ili9341;
 	};
 
 	example_sensor: example-sensor {
@@ -26,78 +37,65 @@
 		led-gpios = <&gpiob 13 GPIO_ACTIVE_HIGH>;
 		blink-period-ms = <1000>;
 	};
-};
 
-&gpioc {
-	status = "okay";
+	/*
+	* LCD driver controller: ILI9341
+	* LCD resolution: 240*320
+	* 3.2 inch display version
+	* SPI2
+	*/
+
+	mipi_dbi {
+		compatible = "zephyr,mipi-dbi-spi";
+		spi-dev = <&spi2>;
+		/* TBC */
+		/* reset-gpios = <&gpiob 4 GPIO_ACTIVE_LOW>; */
+		/* TBC */
+		dc-gpios = <&gpioc 5 GPIO_ACTIVE_HIGH>;
+		write-only;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ili9341: ili9341@0 {
+			compatible = "ilitek,ili9341";
+			reg = <0>;
+			label = "DISPLAY";
+
+			/* 10 MHz */
+			mipi-max-frequency = <1000000>;
+
+			width = <240>;
+			height = <320>;
+			rotation = <90>;
+			pixel-format = <PANEL_PIXEL_FORMAT_RGB_565>;
+
+			/* TBC: is this needed? */
+			/* mipi-hold-cs; */
+			/* mipi-cpol; */
+  			/* mipi-cpha; */
+		};
+	};
 };
 
 &gpiob {
 	status = "okay";
 };
 
-&spi1 {
+&gpioc {
 	status = "okay";
-
-	display: display@1 {
-		compatible = "ilitek,ili9341";
-		/* w25q16cv@0 uses CS pin 0 */
-		reg = <1>;  /* CS pin 1 */
-
-		spi-max-frequency = <8000000>;
-
-		label = "DISPLAY";
-
-		/* Control pins */
-		dc-gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
-		reset-gpios = <&gpiob 1 GPIO_ACTIVE_LOW>;
-
-		width = <240>;
-		height = <240>;
-
-		/* REQUIRED INIT SEQUENCE (from YAML defaults) */
-		/* zephyrproject/zephyr/dts/bindings/display/ilitek,ili9341.yaml */
-
-        ifmode = <0x40>;
-
-        /* ifctl = <0x01 0x00 0x00>; */
-        ifctl = <0x01>;
-
-        pwctrla = <0x39 0x2c 0x00 0x34 0x02>;
-        pwctrlb = <0x00 0x8b 0x30>;
-        pwseqctrl = <0x55 0x01 0x23 0x01>;
-
-        timctrla = <0x84 0x11 0x7a>;
-        timctrlb = <0x00 0x00>;
-
-        pumpratioctrl = <0x10>;
-        enable3g = <0x02>;
-
-        etmod = <0x06>;
-
-        gamset = <0x01>;
-        frmctr1 = <0x00 0x1b>;
-
-        disctrl = <0x0a 0x82 0x27 0x04>;
-
-        pwctrl1 = <0x21>;
-        pwctrl2 = <0x10>;
-
-        vmctrl1 = <0x31 0x3c>;
-        vmctrl2 = <0xc0>;
-
-        pgamctrl = <
-            0x0f 0x22 0x1f 0x0a 0x0e
-            0x06 0x4d 0x76 0x3b 0x03
-            0x0e 0x04 0x13 0x0e 0x0c
-        >;
-
-        ngamctrl = <
-            0x0c 0x23 0x26 0x04 0x10
-            0x04 0x39 0x24 0x4b 0x03
-            0x0b 0x0b 0x33 0x37 0x0f
-        >;
-	};
 };
 
+&spi2 {
+	status = "okay";
+	/* cs-gpios = <&gpiob 12 GPIO_ACTIVE_LOW>; */
+	/* cs-gpios = <&gpiob 12 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>; */
+	cs-gpios = <&gpiob 12 GPIO_ACTIVE_LOW>;
 
+	/*
+	* SCLK: PB13
+	* MISO: PB14
+	* MOSI: PB15
+	*/
+	pinctrl-0 = <&spi2_sck_pb13 &spi2_miso_pb14 &spi2_mosi_pb15>;
+	pinctrl-names = "default";
+};

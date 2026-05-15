@@ -23,6 +23,7 @@ int main(void)
 {
 	int ret;
 	unsigned int period_ms = BLINK_PERIOD_MS_MAX;
+	const struct device *dsp;
 	const struct device *sensor, *blink;
 	struct sensor_value last_val = { 0 }, val;
 
@@ -31,6 +32,16 @@ int main(void)
 	printk("STM32 TFT SPI Display Demo \n");
 	int display_status = sample_display_draw();
 	printk("sample_display_draw status = %d \n", display_status);
+
+
+	// dsp = DEVICE_DT_GET(DT_NODELABEL(ili9340));
+	// dsp = DEVICE_DT_GET(DT_NODELABEL(ili9341));
+	dsp = DEVICE_DT_GET(DT_CHOSEN(zephyr_display));
+	if (!device_is_ready(dsp)) {
+		LOG_ERR("Display device is not ready!");
+		return 0;
+	}
+
 
 	sensor = DEVICE_DT_GET(DT_NODELABEL(example_sensor));
 	if (!device_is_ready(sensor)) {
